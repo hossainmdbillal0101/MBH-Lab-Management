@@ -1,6 +1,6 @@
 # Private Firebase backend and login setup
 
-Publishing the demo does not provision or connect a real backend. The following is the explicit owner-operated setup for the supplied implementation.
+The public demo stays disconnected from private lab data. Deploy a separate staff build with an independently provisioned backend. The following documents the setup for this implementation.
 
 1. Create a separate Firebase project for this lab deployment. Enable Firestore in a suitable region and Authentication email/password. Review project access and enable MFA on administrator accounts. Do not import old production data into the public sample.
 2. With the official Firebase CLI, sign in to the intended account and deploy only the reviewed rules: `firebase deploy --only firestore:rules --project YOUR_PROJECT_ID`. Review the target project before confirming. Do not use a production project for emulator tests. The Storage rules file denies all access and is supplied for review if a bucket already exists; Storage is not needed or enabled for this edition.
@@ -22,3 +22,7 @@ The `demo-` project identifier is intentional. Tests use fictional records, no p
 ## Known limits
 
 This is a single-workspace design, not a multi-tenant SaaS. Dates use local calendar days. Staff cannot edit assets; operational writes are administrator-only. No inspection amendments, deletion, recovery UI, camera scan, evidence upload or offline synchronization is implemented. The UI hides editing while the backend is unavailable, but production enforcement is always the deployed rules. Account MFA and organization policies require owner review; they are not activated by this code.
+
+## Staff password setup
+
+Configured staff builds include **Set or reset your app password** on the sign-in dialog. Provision the account and access claims first. The user requests an email from Firebase and sets a separate app password through Firebase’s hosted flow; never ask for their Google password. The app shows the same response whether or not the address exists. Password reset never grants staff/admin claims. This control is absent from the unconfigured public demo.

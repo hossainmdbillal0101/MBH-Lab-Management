@@ -610,28 +610,40 @@ class _WorkspaceState extends State<Workspace> {
                     title: const Text('Staff sign in'),
                     content: SizedBox(
                         width: 400,
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Text(
-                              'Use an account provisioned by your workspace owner.'),
-                          const SizedBox(height: 15),
-                          TextField(
-                              controller: email,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration:
-                                  const InputDecoration(labelText: 'Email')),
-                          const SizedBox(height: 12),
-                          TextField(
-                              controller: password,
-                              obscureText: true,
-                              decoration:
-                                  const InputDecoration(labelText: 'Password')),
-                          if (error != null)
-                            Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(error!,
-                                    style: const TextStyle(color: Colors.red)))
-                        ])),
+                        child: SingleChildScrollView(
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                              const Text(
+                                  'Use an account provisioned by your workspace owner.'),
+                              const SizedBox(height: 15),
+                              TextField(
+                                  controller: email,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Email')),
+                              const SizedBox(height: 12),
+                              TextField(
+                                  controller: password,
+                                  obscureText: true,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Password')),
+                              TextButton(
+                                  onPressed: saving
+                                      ? null
+                                      : () {
+                                          Navigator.pop(ctx);
+                                          passwordSetup();
+                                        },
+                                  child: const Text(
+                                      "Set or reset your app password")),
+                              if (error != null)
+                                Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Text(error!,
+                                        style:
+                                            const TextStyle(color: Colors.red)))
+                            ]))),
                     actions: [
                       TextButton(
                           onPressed: saving ? null : () => Navigator.pop(ctx),
@@ -659,6 +671,70 @@ class _WorkspaceState extends State<Workspace> {
                     ])));
     email.dispose();
     password.dispose();
+  }
+
+  Future<void> passwordSetup() async {
+    final email = TextEditingController();
+    bool sending = false;
+    String? notice;
+    await showDialog<void>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+            builder: (ctx, update) => AlertDialog(
+                    title: const Text('Set or reset app password'),
+                    content: SizedBox(
+                        width: 420,
+                        child: SingleChildScrollView(
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                              const Text(
+                                  'Use your provisioned staff email. You will set a separate password for this workspace through Firebase’s email link; do not enter your Google account password here.'),
+                              const SizedBox(height: 16),
+                              TextField(
+                                  controller: email,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Staff email')),
+                              if (notice != null)
+                                Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: Text(notice!)),
+                            ]))),
+                    actions: [
+                      TextButton(
+                          onPressed: sending ? null : () => Navigator.pop(ctx),
+                          child: const Text('Close')),
+                      FilledButton(
+                          onPressed: sending
+                              ? null
+                              : () async {
+                                  if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                      .hasMatch(email.text.trim())) {
+                                    update(() => notice =
+                                        'Enter a valid email address.');
+                                    return;
+                                  }
+                                  update(() => sending = true);
+                                  try {
+                                    await s.api
+                                        .requestPasswordReset(email.text);
+                                  } catch (_) {
+                                    /* Keep account existence private. */
+                                  }
+                                  if (ctx.mounted) {
+                                    update(() {
+                                      sending = false;
+                                      notice =
+                                          'If this email belongs to a provisioned account, check its inbox for setup instructions. If nothing arrives, check your address and connection or contact your workspace owner.';
+                                    });
+                                  }
+                                },
+                          child: Text(sending
+                              ? 'Requesting...'
+                              : 'Request setup email'))
+                    ])));
+    email.dispose();
   }
 
   Future<void> addLab() async {

@@ -69,6 +69,19 @@ class FirebaseApi {
         int.parse(d['expiresIn'] as String));
   }
 
+  Future<void> requestPasswordReset(String email) async {
+    if (!configured) throw StateError('Staff backend is not configured.');
+    final address = email.trim();
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(address)) {
+      throw ArgumentError('Enter a valid email address.');
+    }
+    await _send(
+        'POST',
+        Uri.https('identitytoolkit.googleapis.com', '/v1/accounts:sendOobCode',
+            {'key': apiKey}),
+        body: {'requestType': 'PASSWORD_RESET', 'email': address});
+  }
+
   void _setToken(String token, String refresh, int seconds) {
     _token = token;
     _refreshToken = refresh;
